@@ -10,60 +10,49 @@ BluetoothSerial SerialBT;
 
 
 QTRSensors sigueLineas;
+#define BOTON 12
 
 const uint8_t SensorCount = 8;
 uint16_t sensorValues[SensorCount];
+uint16_t sensorUmbrales[SensorCount];
 
 const int freq = 5000;
 const int resolution = 8;
 
-int umbral = 2500;
 
+
+
+/*int desicion = 0;
+int inter = 0;
+int laser = 0;
+*/
 
 void setup() {
   QTRSetup();
   inicializarMotores();
+  for (uint16_t i = 0; i < 400; i++) {
 
-  while (digitalRead(BOTON) == 0) {
+    sigueLineas.calibrate();
   }
-  SerialBT.begin("robot1");
+  for (int i = 0; i< SensorCount; i++) {
+
+    sensorUmbrales[i] = (sigueLineas.calibrationOn.minimum[i] + sigueLineas.calibrationOn.maximum[i]) / 2;
+  }
+  if (sensorValues[0] > sensorUmbrales[0])
+
+    SerialBT.begin("robot1");
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
   sigueLineas.read(sensorValues);
+  int posicion = sigueLineas.readLineBlack(sensorValues);
 
-  //curva izq --> bbnn
-  if (sensorValues[2] <= umbral && sensorValues[3] <= umbral && sensorValues[4] >= umbral && sensorValues[5] >= umbral) {
-    Motor(0, 50);
-  }
-  //curva der --> nnbb
-  else if (sensorValues[2] >= umbral && sensorValues[3] >= umbral && sensorValues[4] <= umbral && sensorValues[5] <= umbral) {
-    Motor(50, 0);
-  }
-  //giroIZQ --> NNBB (solo laterales)
-  else if (sensorValues[0] >= umbral && sensorValues[1] >= umbral && sensorValues[6] <= umbral && sensorValues[7] <= umbral) {
-    giroIzq();
-  }
-  //giro der -->BBNN (solo laterales)
-  else if (sensorValues[0] <= umbral && sensorValues[1] <= umbral && sensorValues[6] >= umbral && sensorValues[7] >= umbral) {
-    giroDer();
-  }
+  posicion = map(posicion, 0, 7000, -255, 255);
+
+  Serial.println(posicion);
+  delay(250);
   //gap --> BBBB
-  else if (sensorValues[2] >= umbral && sensorValues[3] >= umbral && sensorValues[4] >= umbral && sensorValues[5] >= umbral) {
-    Motor(30, 30);
-  }
-  //intersección --> NNNN
-  else if (sensorValues[2] >= umbral && sensorValues[3] >= umbral && sensorValues[4] >= umbral && sensorValues[5] >= umbral) {
-    Motor(50, 50);
-  }
-  //avanzar -->BNB
-  else if (sensorValues[2] <= umbral && sensorValues[3] <= umbral && sensorValues[4] >= umbral && sensorValues[5] >= umbral) {
-    Motor(50, 50);
-  }
-  for (int i = 0; i <= 7; i++) {
-    SerialBT.print(sensorValues[i]);
-    SerialBT.print(" ");
-  }
-  SerialBT.println();
+
+  //
 }

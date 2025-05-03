@@ -6,4 +6,3 @@
 #define BIN2 18
 #define PWMB 19
 
-#define BOTON 12
